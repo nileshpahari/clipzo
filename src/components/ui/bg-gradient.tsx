@@ -1,14 +1,3 @@
-
-// export default function BgGradient({ children }: { children: React.ReactNode }) {
-//     return (
-//         <div className="h-screen w-full" style={{ backgroundImage: 'linear-gradient(120deg, #a6c0fe 0%, #f68084 100%)' }}>
-//             {children}
-//         </div>
-//     );
-// }
-
-
-
 "use client";
 
 import { motion } from "framer-motion";
