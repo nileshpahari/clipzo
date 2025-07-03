@@ -55,7 +55,7 @@ export default function Clipper() {
     if (!session) {
       router.push("/signin");
     }
-  }, [session]);
+  }, [session, router]);
 
   const fetchLogs = async () => {
     setIsLoadingLogs(true);
@@ -139,88 +139,89 @@ export default function Clipper() {
       fetchMetadata(url);
     } else {
       setThumbnailUrl(null);
-      setMetadata({});
+      setMetadata(defaultMetadata);
       setFormats([]);
       setSelectedFormat("");
       setIsMetadataLoading(false);
       setSelectedOption(defaultOption);
     }
-  }, [url]);
+  }, [url, session]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    toast("Feature under development");
     e.preventDefault();
+    setLoading(false);
+    toast("Feature under development");
+    return;
 
-    setLoading(true);
 
-    try {
-      // Step 1: kick-off processing
-      const clipKickoff = await fetch("/api/clip", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url,
-          startTime,
-          endTime,
-          cropRatio,
-          subtitles: addSubs,
-          formatId: selectedFormat,
-          userId: session?.user?.id,
-        }),
-      });
+    // try {
+    //   // Step 1: kick-off processing
+    //   const clipKickoff = await fetch("/api/clip", {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({
+    //       url,
+    //       startTime,
+    //       endTime,
+    //       cropRatio,
+    //       selectedOption,
+    //       formatId: selectedFormat,
+    //       user: session,
+    //     }),
+    //   });
 
-      if (!clipKickoff.ok) {
-        const errJson = await clipKickoff.json().catch(() => ({}));
-        throw new Error(errJson.error || "Failed to start processing");
-      }
+    //   if (!clipKickoff.ok) {
+    //     const errJson = await clipKickoff.json().catch(() => ({}));
+    //     throw new Error(errJson.error || "Failed to start processing");
+    //   }
 
-      const { id } = (await clipKickoff.json()) as { id: string };
+    //   const { id } = (await clipKickoff.json()) as { id: string };
 
-      // Step 2: poll until ready
-      type JobStatus = "processing" | "ready" | "error";
-      interface JobStatusResponse {
-        status: JobStatus;
-        error?: string;
-        url?: string;
-      }
+    //   // Step 2: poll until ready
+    //   type JobStatus = "processing" | "ready" | "error";
+    //   interface JobStatusResponse {
+    //     status: JobStatus;
+    //     error?: string;
+    //     url?: string;
+    //   }
 
-      let status: JobStatus = "processing";
-      while (status === "processing") {
-        await new Promise((r) => setTimeout(r, 3000)); // 3-second polling
-        const pollRes = await fetch(`/api/clip/${id}`);
-        if (!pollRes.ok) throw new Error("Failed to poll job status");
-        const pollJson = (await pollRes.json()) as JobStatusResponse;
-        status = pollJson.status;
-        if (status === "error")
-          throw new Error(pollJson.error || "Processing failed");
-      }
+    //   let status: JobStatus = "processing";
+    //   while (status === "processing") {
+    //     await new Promise((r) => setTimeout(r, 3000)); // 3-second polling
+    //     const pollRes = await fetch(`/api/clip/${id}`);
+    //     if (!pollRes.ok) throw new Error("Failed to poll job status");
+    //     const pollJson = (await pollRes.json()) as JobStatusResponse;
+    //     status = pollJson.status;
+    //     if (status === "error")
+    //       throw new Error(pollJson.error || "Processing failed");
+    //   }
 
-      // Step 3: Download via frontend route (handles Supabase download and cleanup)
-      const downloadRes = await fetch(`/api/clip/${id}/download`);
-      if (!downloadRes.ok) throw new Error("Failed to download clip");
+    //   // Step 3: Download via frontend route (handles Supabase download and cleanup)
+    //   const downloadRes = await fetch(`/api/clip/${id}/download`);
+    //   if (!downloadRes.ok) throw new Error("Failed to download clip");
 
-      const blob = await downloadRes.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download = "clip.mp4";
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(downloadUrl);
-      a.remove();
+    //   const blob = await downloadRes.blob();
+    //   const downloadUrl = window.URL.createObjectURL(blob);
+    //   const a = document.createElement("a");
+    //   a.href = downloadUrl;
+    //   a.download = "clip.mp4";
+    //   document.body.appendChild(a);
+    //   a.click();
+    //   window.URL.revokeObjectURL(downloadUrl);
+    //   a.remove();
 
-      // // Update download count
-      // const newCount = downloadCount + 1;
-      // if (session?.user?.id) {
-      //   localStorage.setItem(`bangers-${session.user.id}`, String(newCount));
-      // }
-      // setDownloadCount(newCount);
-    } catch (err) {
-      console.error("Error in handleSubmit:", err);
-      // Add user-friendly error handling here
-    } finally {
-      setLoading(false);
-    }
+    //   // // Update download count
+    //   // const newCount = downloadCount + 1;
+    //   // if (session?.user?.id) {
+    //   //   localStorage.setItem(`bangers-${session.user.id}`, String(newCount));
+    //   // }
+    //   // setDownloadCount(newCount);
+    // } catch (err) {
+    //   console.error("Error in handleSubmit:", err);
+    //   // Add user-friendly error handling here
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   const resolutionOptions = {
@@ -270,7 +271,7 @@ export default function Clipper() {
                     height={720}
                     src={thumbnailUrl}
                     alt="Video thumbnail"
-                    className="w-20 object-cover aspect-video rounded-md"
+                    className="w-32 object-cover aspect-video rounded-md"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       if (target.src.includes("maxresdefault")) {
@@ -423,14 +424,6 @@ export default function Clipper() {
               <div className="flex flex-col gap-2 flex-1">
                 <Label htmlFor="subtitles-switch">Options</Label>
                 <div className="flex items-center space-x-2 h-10">
-                  {/* <Switch
-                    id="subtitles-switch"
-                    checked={addSubs}
-                    onCheckedChange={setAddSubs}
-                  />
-                  <Label htmlFor="subtitles-switch" className="text-sm text-muted-foreground">
-                    English only
-                  </Label> */}
                   <select
                     id="quality"
                     value={selectedOption}
@@ -460,18 +453,6 @@ export default function Clipper() {
             </div>
           </div>
         </motion.form>
-        {/* <AnimatePresence mode="wait">
-          {downloadCount > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="text-center mt-4 text-sm text-muted-foreground"
-            >
-              🔥 {downloadCount} banger{downloadCount > 1 && "s"} clipped
-            </motion.div>
-          )}
-        </AnimatePresence> */}
         <div className="w-full">
           <LogsDropdown
             isOpen={showLogs}
