@@ -1,11 +1,10 @@
-// "use client";
 import Clipper from "@/components/clipper";
 import Onboarding from "@/components/onboarding";
-// import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth";
+import AuthConfig from "@/lib/auth";
 
 export default async function Home() {
-  // const session = await getSession();
-  const session = 1;
+  const session = await getServerSession(AuthConfig);
   if (!session) {
     return <Onboarding/>;
   }
