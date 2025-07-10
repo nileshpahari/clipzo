@@ -1,6 +1,6 @@
 "use client"
 import { motion } from "motion/react";
-
+import Link from "next/link";
 export default function Onboarding() {
     return (
     <div className="flex flex-col items-center justify-center h-screen px-4 text-center">
@@ -14,7 +14,7 @@ export default function Onboarding() {
       </motion.h1>
 
       <motion.div
-        className="mt-4 text-lg sm:text-xl text-muted-foreground text-center space-y-2"
+        className="mt-4 text-lg sm:text-xl text-muted-foreground text-center space-y-2 max-w-lg mx-auto"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8, delay: 0.6 }}
@@ -31,7 +31,7 @@ export default function Onboarding() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8, delay: 1 }}
       >
-        Get Started
+        <Link href="/signin">Get Started</Link>
       </motion.button>
 
       <motion.p
