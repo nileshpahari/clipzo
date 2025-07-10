@@ -2,7 +2,7 @@ use crate::{models::*, services::*, AppState};
 use axum::{
     extract::{Path, Query, State},
     http::{header, StatusCode},
-    response::{IntoResponse, Json, Response},
+    response::{Json, Response},
 };
 use std::sync::Arc;
 use tracing::{error, info};

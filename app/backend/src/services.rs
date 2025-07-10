@@ -4,7 +4,7 @@ use std::sync::Arc;
 use tokio::process::Command;
 use uuid::Uuid;
 use anyhow::{anyhow, Result};
-use tracing::{error, info, warn};
+use tracing::{error, info};
 use std::path::PathBuf;
 
 pub struct JobManager {

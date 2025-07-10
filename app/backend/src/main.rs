@@ -1,14 +1,10 @@
 use axum::{
-    extract::{Path, Query, State},
-    http::{header, StatusCode},
-    response::{IntoResponse, Json, Response},
     routing::{get, post},
     Router,
 };
-use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, sync::Arc};
+use std::{sync::Arc};
 use tower_http::cors::CorsLayer;
-use tracing::{error, info};
+use tracing::{info};
 
 mod handlers;
 mod models;
@@ -16,7 +12,6 @@ mod services;
 mod utils;
 
 use handlers::*;
-use models::*;
 use services::*;
 
 pub type AppState = Arc<JobManager>;
