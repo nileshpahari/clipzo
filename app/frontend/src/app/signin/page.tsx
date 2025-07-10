@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { motion } from "motion/react";
 import { FaGoogle as Google } from "react-icons/fa";
-import { FaGithub as Github } from "react-icons/fa";
 import { FaXTwitter as X } from "react-icons/fa6";
 import { useRouter } from "next/navigation";
 
@@ -49,14 +48,6 @@ export default function SignInClient() {
             >
               <Google className="h-4 w-4" />
               Continue with Google
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-center gap-2 rounded-sm"
-              onClick={() => signIn("github", {callbackUrl:"/"})}
-            >
-              <Github className="h-4 w-4" />
-              Continue with GitHub
             </Button>
             <Button
               variant="outline"
