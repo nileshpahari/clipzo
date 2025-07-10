@@ -16,8 +16,8 @@ export default function Footer() {
           <span className="hidden sm:inline">.</span>
         </div>
         <div>
-          <Link href="/thankful" className="underline">
-            Credits
+          <Link href="/mentions" className="underline">
+            Mentions
           </Link>
           <span className="hidden sm:inline">.</span>
         </div>
