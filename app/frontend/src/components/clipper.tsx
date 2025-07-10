@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { dummyLogs, platformThumbnails, specialOptions } from "@/constants";
 import { useRouter } from "next/navigation";
 
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
 export default function Clipper() {
   const defaultOption = "Select an option";
   interface Metadata {
@@ -52,6 +53,9 @@ export default function Clipper() {
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
 
   useEffect(() => {
+    toast("Backend under construction. Please come back later", {
+      duration: 5000,
+    });
     if (!session) {
       router.push("/signin");
     }
@@ -60,9 +64,7 @@ export default function Clipper() {
   const fetchLogs = async () => {
     setIsLoadingLogs(true);
     try {
-      // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      // In a real implementation, you would fetch from your backend:
       // const response = await fetch('/api/logs');
       // const logsData = await response.json();
       setLogs(dummyLogs);
@@ -95,8 +97,9 @@ export default function Clipper() {
     setIsMetadataLoading(true);
     try {
       const metadataResponse = await axios.get(
-        `/api/metadata?url=${encodeURIComponent(url)}`
+        `${baseURL}/metadata?url=${url}`
       );
+      console.log(metadataResponse.data);
       if (!metadataResponse.data.ok)
         throw new Error("Failed to fetch video metadata");
       const metadata = await metadataResponse.data;
@@ -113,10 +116,12 @@ export default function Clipper() {
 
       // Fetch formats
       const formatsResponse = await axios.get(
-        `/api/formats?url=${encodeURIComponent(url)}`
+       `${baseURL}/formats?url=${url}`
       );
+      console.log(formatsResponse.data);
       if (formatsResponse.data.ok) {
         const formatsData = await formatsResponse.data;
+        console.log(formatsData);
         setFormats(formatsData.formats ?? []);
         if (formatsData.formats?.length > 0) {
           setSelectedFormat(formatsData.formats[0].format_id);
@@ -149,79 +154,81 @@ export default function Clipper() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(false);
-    toast("Feature under development");
-    return;
+    setLoading(true);
 
 
-    // try {
-    //   // Step 1: kick-off processing
-    //   const clipKickoff = await fetch("/api/clip", {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({
-    //       url,
-    //       startTime,
-    //       endTime,
-    //       cropRatio,
-    //       selectedOption,
-    //       formatId: selectedFormat,
-    //       user: session,
-    //     }),
-    //   });
+    try {
+ const clipKickoff = await fetch(`${baseURL}/clip`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // body: JSON.stringify({
+        //   url,
+        //   start_time,
+        //   end_time,
+        //   crop_ratio,
+        //   // selected_option,
+        //   format_id: selectedFormat,
+        //   // user: session,
+        // }),
+        body: JSON.stringify({
+  url,
+  start_time:   startTime,
+  end_time:     endTime,
+  crop_ratio:   cropRatio,
+  format_id:    selectedFormat,
+})
 
-    //   if (!clipKickoff.ok) {
-    //     const errJson = await clipKickoff.json().catch(() => ({}));
-    //     throw new Error(errJson.error || "Failed to start processing");
-    //   }
+      });
 
-    //   const { id } = (await clipKickoff.json()) as { id: string };
+      if (!clipKickoff.ok) {
+        const errJson = await clipKickoff.json().catch(() => ({}));
+        throw new Error(errJson.error || "Failed to start processing");
+      }
 
-    //   // Step 2: poll until ready
-    //   type JobStatus = "processing" | "ready" | "error";
-    //   interface JobStatusResponse {
-    //     status: JobStatus;
-    //     error?: string;
-    //     url?: string;
-    //   }
+      const { id } = (await clipKickoff.json()) as { id: string };
 
-    //   let status: JobStatus = "processing";
-    //   while (status === "processing") {
-    //     await new Promise((r) => setTimeout(r, 3000)); // 3-second polling
-    //     const pollRes = await fetch(`/api/clip/${id}`);
-    //     if (!pollRes.ok) throw new Error("Failed to poll job status");
-    //     const pollJson = (await pollRes.json()) as JobStatusResponse;
-    //     status = pollJson.status;
-    //     if (status === "error")
-    //       throw new Error(pollJson.error || "Processing failed");
-    //   }
+      type JobStatus = "processing" | "ready" | "error";
+      interface JobStatusResponse {
+        status: JobStatus;
+        error?: string;
+        url?: string;
+      }
 
-    //   // Step 3: Download via frontend route (handles Supabase download and cleanup)
-    //   const downloadRes = await fetch(`/api/clip/${id}/download`);
-    //   if (!downloadRes.ok) throw new Error("Failed to download clip");
+      let status: JobStatus = "processing";
+      while (status === "processing") {
+        await new Promise((r) => setTimeout(r, 3000)); 
+        const pollRes = await fetch(`${baseURL}/clip/${id}`);
+        if (!pollRes.ok) throw new Error("Failed to poll job status");
+        const pollJson = (await pollRes.json()) as JobStatusResponse;
+        status = pollJson.status;
+        if (status === "error")
+          throw new Error(pollJson.error || "Processing failed");
+      }
 
-    //   const blob = await downloadRes.blob();
-    //   const downloadUrl = window.URL.createObjectURL(blob);
-    //   const a = document.createElement("a");
-    //   a.href = downloadUrl;
-    //   a.download = "clip.mp4";
-    //   document.body.appendChild(a);
-    //   a.click();
-    //   window.URL.revokeObjectURL(downloadUrl);
-    //   a.remove();
+      const downloadRes = await fetch(`${baseURL}/clip/${id}/download`);
+      if (!downloadRes.ok) throw new Error("Failed to download clip");
 
-    //   // // Update download count
-    //   // const newCount = downloadCount + 1;
-    //   // if (session?.user?.id) {
-    //   //   localStorage.setItem(`bangers-${session.user.id}`, String(newCount));
-    //   // }
-    //   // setDownloadCount(newCount);
-    // } catch (err) {
-    //   console.error("Error in handleSubmit:", err);
-    //   // Add user-friendly error handling here
-    // } finally {
-    //   setLoading(false);
-    // }
+      const blob = await downloadRes.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = "clip.mp4";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(downloadUrl);
+      a.remove();
+
+      // const newCount = downloadCount + 1;
+      // if (session?.user?.id) {
+      //   localStorage.setItem(`bangers-${session.user.id}`, String(newCount));
+      // }
+      // setDownloadCount(newCount);
+    } catch (err) {
+      console.error("Error in handleSubmit:", err);
+      // Add user-friendly error handling here
+    } finally {
+      setLoading(false);
+    }
   };
 
   const resolutionOptions = {
@@ -410,10 +417,10 @@ export default function Clipper() {
                   disabled={formats.length === 0}
                 >
                   {formats.length === 0 ? (
-                    <option value="">Loading formats...</option>
+                    <option value="" className="text-muted-foreground ">Loading formats...</option>
                   ) : (
                     formats.map((format) => (
-                      <option key={format.format_id} value={format.format_id}>
+                      <option className="text-foreground " key={format.format_id} value={format.format_id}>
                         {format.label}
                       </option>
                     ))
